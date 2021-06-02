@@ -7,8 +7,7 @@ namespace NGettext.Wpf
     {
         public CultureEventArgs(CultureInfo cultureInfo)
         {
-            if (cultureInfo == null) throw new ArgumentNullException(nameof(cultureInfo));
-            CultureInfo = cultureInfo;
+            CultureInfo = cultureInfo ?? throw new ArgumentNullException(nameof(cultureInfo));
         }
 
         public CultureInfo CultureInfo { get; }

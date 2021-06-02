@@ -14,12 +14,6 @@ namespace NGettext.Wpf.Tests
         }
 
         [Fact]
-        public void Depends_On_CultureInfo()
-        {
-            Assert.DependsOn("cultureInfo", () => new CultureEventArgs(null));
-        }
-
-        [Fact]
         public void CultureInfo_Is_Injected()
         {
             var cultureInfo = new CultureInfo("en-GB");

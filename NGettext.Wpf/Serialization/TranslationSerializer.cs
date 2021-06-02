@@ -24,7 +24,8 @@ namespace NGettext.Wpf.Serialization
             var msgIdWithContext = LocalizerExtensions.ConvertToMsgIdWithContext(msgId);
             var result = new StringBuilder();
             result.Append("{");
-            bool addComma = false;
+            var addComma = false;
+
             foreach (var cultureInfo in cultureInfos)
             {
                 if (addComma)
@@ -41,30 +42,21 @@ namespace NGettext.Wpf.Serialization
 
                 if (string.IsNullOrEmpty(msgIdWithContext.Context))
                 {
-                    if (args.Any())
-                    {
-                        message = catalog.GetString(msgIdWithContext.MsgId, args);
-                    }
-                    else
-                    {
-                        message = catalog.GetString(msgIdWithContext.MsgId);
-                    }
+                    message = args.Any()
+                        ? catalog.GetString(msgIdWithContext.MsgId, args)
+                        : catalog.GetString(msgIdWithContext.MsgId);
                 }
                 else
                 {
-                    if (args.Any())
-                    {
-                        message = catalog.GetParticularString(msgIdWithContext.Context, msgIdWithContext.MsgId, args);
-                    }
-                    else
-                    {
-                        message = catalog.GetParticularString(msgIdWithContext.Context, msgIdWithContext.MsgId);
-                    }
+                    message = args.Any()
+                        ? catalog.GetParticularString(msgIdWithContext.Context, msgIdWithContext.MsgId, args)
+                        : catalog.GetParticularString(msgIdWithContext.Context, msgIdWithContext.MsgId);
                 }
 
                 result.AppendFormat("\"{0}\": \"{1}\"", cultureInfo.Name,
                     HttpUtility.JavaScriptStringEncode(message));
             }
+
             result.Append("}");
             return result.ToString();
         }

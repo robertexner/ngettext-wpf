@@ -92,9 +92,9 @@ namespace NGettext.Wpf.Example
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public string SomeDeferredLocalization => Translation._(_someDeferredLocalization);
+        public string SomeDeferredLocalization => Translation.GetText(_someDeferredLocalization);
 
-        public string Header => Translation._("NGettext.WPF Example");
+        public string Header => Translation.GetText("NGettext.WPF Example");
 
         public string PluralGettext => Translation.PluralGettext(1, "Singular", "Plural") +
                                        "---" + Translation.PluralGettext(2, "Singular", "Plural");

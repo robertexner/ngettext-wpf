@@ -19,12 +19,6 @@ namespace NGettext.Wpf.Tests
         }
 
         [Fact]
-        public void Depends_On_CultureTracker()
-        {
-            Assert.DependsOn("cultureTracker", () => new Localizer(null, "some domain"));
-        }
-
-        [Fact]
         public void Catalog_Is_Initialized_From_CultureTracker_CurrentCulture()
         {
             Assert.Same(_cultureTracker.CurrentCulture, Assert.IsAssignableFrom<Catalog>(_target.Catalog).CultureInfo);

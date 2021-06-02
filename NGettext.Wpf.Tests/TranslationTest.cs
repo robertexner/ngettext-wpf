@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Globalization;
-using Newtonsoft.Json;
-using NSubstitute;
+﻿using NSubstitute;
 using Xunit;
 
 namespace NGettext.Wpf.Tests
@@ -19,13 +16,13 @@ namespace NGettext.Wpf.Tests
         public void Underscore_Returns_Expected_Translation(string msgId, string expectedTranslation)
         {
             _localizer.Catalog.GetString(Arg.Is(msgId)).Returns(expectedTranslation);
-            Assert.Equal(expectedTranslation, Translation._(msgId));
+            Assert.Equal(expectedTranslation, Translation.GetText(msgId));
         }
 
         [Fact]
         public void Underscore_Does_Not_Crash_When_MsgId_Is_Null()
         {
-            var e = Record.Exception(() => Translation._(null));
+            var e = Record.Exception(() => Translation.GetText(null));
 
             Assert.Null(e);
         }
@@ -33,7 +30,7 @@ namespace NGettext.Wpf.Tests
         [Fact]
         public void Underscore_With_Args_Does_Not_Crash_When_MsgId_Is_Null()
         {
-            var e = Record.Exception(() => Translation._(null, 1, 2, 3));
+            var e = Record.Exception(() => Translation.GetText(null, 1, 2, 3));
 
             Assert.Null(e);
         }
@@ -44,7 +41,7 @@ namespace NGettext.Wpf.Tests
             _localizer.Catalog.GetString(Arg.Is("foo {0} bar {1} baz"), Arg.Is(0xdead), Arg.Is(0xbeef))
                 .Returns("expected translation");
 
-            var actual = Translation._("foo {0} bar {1} baz", 0xdead, 0xbeef);
+            var actual = Translation.GetText("foo {0} bar {1} baz", 0xdead, 0xbeef);
 
             Assert.Equal("expected translation", actual);
         }
@@ -53,7 +50,7 @@ namespace NGettext.Wpf.Tests
         public void Underscore_Function_Handles_Localizer_Being_Null()
         {
             Translation.Localizer = null;
-            Assert.Equal("untranslated", Translation._("untranslated"));
+            Assert.Equal("untranslated", Translation.GetText("untranslated"));
         }
 
         [Theory, InlineData("context", "some msgid", "some translation")]

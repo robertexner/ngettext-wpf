@@ -1,8 +1,7 @@
-﻿using System;
+﻿using Microsoft.Xaml.Behaviors; //TODO can be replaced with PRISM if needed
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Markup;
-using System.Windows.Interactivity;
 
 namespace NGettext.Wpf
 {

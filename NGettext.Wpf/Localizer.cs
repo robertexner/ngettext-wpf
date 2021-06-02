@@ -1,24 +1,36 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 
 namespace NGettext.Wpf
 {
     public interface ILocalizer
     {
-        ICatalog Catalog { get; }
+        IList<ICatalog> Catalogs { get; }
+
         ICultureTracker CultureTracker { get; }
 
-        ICatalog GetCatalog(CultureInfo cultureInfo);
+        ICatalog GetCatalog(CultureInfo cultureInfo, string domainName = null);
     }
 
     public class Localizer : IDisposable, ILocalizer
     {
-        private readonly string _domainName;
+        private readonly IList<string> mDomainNames = new List<string>();
 
         public Localizer(ICultureTracker cultureTracker, string domainName)
         {
-            _domainName = domainName;
+            mDomainNames.Add(domainName);
+            CultureTracker = cultureTracker;
+            if (cultureTracker == null) throw new ArgumentNullException(nameof(cultureTracker));
+            cultureTracker.CultureChanging += ResetCatalog;
+            ResetCatalog(cultureTracker.CurrentCulture);
+        }
+
+        public Localizer(ICultureTracker cultureTracker, IEnumerable<string> domainNames)
+        {
+            ((List<string>)mDomainNames).AddRange(domainNames);
             CultureTracker = cultureTracker;
             if (cultureTracker == null) throw new ArgumentNullException(nameof(cultureTracker));
             cultureTracker.CultureChanging += ResetCatalog;
@@ -32,18 +44,30 @@ namespace NGettext.Wpf
 
         private void ResetCatalog(CultureInfo cultureInfo)
         {
-            Catalog = GetCatalog(cultureInfo);
+            if (Catalogs == null)
+            {
+                Catalogs = new List<ICatalog>();
+            }
+            else
+            {
+                Catalogs.Clear();
+            }
+
+            foreach (var domainName in mDomainNames)
+            {
+                Catalogs.Add(GetCatalog(cultureInfo, domainName));
+            }
         }
 
-        public ICatalog GetCatalog(CultureInfo cultureInfo)
+        public ICatalog GetCatalog(CultureInfo cultureInfo, string domainName)
         {
             var localeDir = "Locale";
             Console.WriteLine(
-                $"NGettext.Wpf: Attempting to load \"{Path.GetFullPath(Path.Combine(localeDir, cultureInfo.Name, "LC_MESSAGES", _domainName + ".mo"))}\"");
-            return new Catalog(_domainName, localeDir, cultureInfo);
+                $"NGettext.Wpf: Attempting to load \"{Path.GetFullPath(Path.Combine(localeDir, cultureInfo.Name, "LC_MESSAGES", domainName + ".mo"))}\"");
+            return new Catalog(domainName, localeDir, cultureInfo);
         }
 
-        public ICatalog Catalog { get; private set; }
+        public IList<ICatalog> Catalogs { get; private set; }
         public ICultureTracker CultureTracker { get; }
 
         public void Dispose()
@@ -64,12 +88,14 @@ namespace NGettext.Wpf
         {
             var result = new MsgIdWithContext { MsgId = msgId };
 
-            if (msgId.Contains("|"))
+            if (!msgId.Contains("|"))
             {
-                var pipePosition = msgId.IndexOf('|');
-                result.Context = msgId.Substring(0, pipePosition);
-                result.MsgId = msgId.Substring(pipePosition + 1);
+                return result;
             }
+
+            var pipePosition = msgId.IndexOf('|');
+            result.Context = msgId.Substring(0, pipePosition);
+            result.MsgId = msgId.Substring(pipePosition + 1);
 
             return result;
         }
@@ -86,11 +112,36 @@ namespace NGettext.Wpf
                 return string.Format(msgIdWithContext.MsgId, values);
             }
 
-            if (msgIdWithContext.Context != null)
+            var text = msgIdWithContext.MsgId;
+            var result = string.Empty;
+
+            foreach (var catalog in @this.Catalogs)
             {
-                return @this.Catalog.GetParticularString(msgIdWithContext.Context, msgIdWithContext.MsgId, values);
+                if (msgIdWithContext.Context != null)
+                {
+                    result = catalog.GetParticularString(msgIdWithContext.Context, msgIdWithContext.MsgId, values);
+
+                    if (result.Equals(text))
+                    {
+                        continue;
+                    }
+
+                    break;
+                }
+
+                result = catalog.GetString(msgIdWithContext.MsgId, values);
+
+                if (result.Equals(text))
+                {
+                    continue;
+                }
+
+                break;
             }
-            return @this.Catalog.GetString(msgIdWithContext.MsgId, values);
+
+            text = result;
+
+            return text;
         }
 
         internal static string Gettext(this ILocalizer @this, string msgId)
@@ -105,11 +156,36 @@ namespace NGettext.Wpf
                 return msgIdWithContext.MsgId;
             }
 
-            if (msgIdWithContext.Context != null)
+            var text = msgIdWithContext.MsgId;
+            var result = string.Empty;
+
+            foreach (var catalog in @this.Catalogs)
             {
-                return @this.Catalog.GetParticularString(msgIdWithContext.Context, msgIdWithContext.MsgId);
+                if (msgIdWithContext.Context != null)
+                {
+                    result = catalog.GetParticularString(msgIdWithContext.Context, msgIdWithContext.MsgId);
+
+                    if (result.Equals(text))
+                    {
+                        continue;
+                    }
+
+                    break;
+                }
+
+                result = catalog.GetString(msgIdWithContext.MsgId);
+
+                if (result.Equals(text))
+                {
+                    continue;
+                }
+
+                break;
             }
-            return @this.Catalog.GetString(msgIdWithContext.MsgId);
+
+            text = result;
+
+            return text;
         }
     }
 }

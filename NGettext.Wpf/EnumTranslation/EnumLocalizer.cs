@@ -22,15 +22,16 @@ namespace NGettext.Wpf.EnumTranslation
         {
             var type = value.GetType();
             var enumMemberName = value.ToString();
-            var msgIdAttribute = (EnumMsgIdAttribute)type.GetMember(enumMemberName).SingleOrDefault()?.GetCustomAttribute(typeof(EnumMsgIdAttribute), true);
+            var msgIdAttribute = (EnumMsgIdAttribute) type.GetMember(enumMemberName).SingleOrDefault()
+                ?.GetCustomAttribute(typeof(EnumMsgIdAttribute), true);
 
-            if (msgIdAttribute is null)
+            if (msgIdAttribute is { })
             {
-                Console.Error.WriteLine($"{type}.{enumMemberName} lacks the [MsgId(\"...\")] attribute.");
-                return enumMemberName;
+                return _localizer.Gettext(msgIdAttribute.MsgId);
             }
 
-            return _localizer.Gettext(msgIdAttribute.MsgId);
+            Console.Error.WriteLine($"{type}.{enumMemberName} lacks the [MsgId(\"...\")] attribute.");
+            return enumMemberName;
         }
     }
 }
